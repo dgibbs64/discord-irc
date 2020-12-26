@@ -4,9 +4,10 @@ import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
 import irc from 'irc-upd';
 import discord from 'discord.js';
-import logger from 'winston';
 import Bot from '../lib/bot';
+import logger from '../lib/logger';
 import createDiscordStub from './stubs/discord-stub';
+import createWebhookStub from './stubs/webhook-stub';
 import ClientStub from './stubs/irc-client-stub';
 import config from './fixtures/single-test-config.json';
 
@@ -14,7 +15,7 @@ chai.should();
 chai.use(sinonChai);
 
 describe('Bot Events', function () {
-  const sandbox = sinon.sandbox.create({
+  const sandbox = sinon.createSandbox({
     useFakeTimers: false,
     useFakeServer: false
   });
@@ -34,9 +35,9 @@ describe('Bot Events', function () {
     this.warnSpy = sandbox.stub(logger, 'warn');
     this.errorSpy = sandbox.stub(logger, 'error');
     this.sendStub = sandbox.stub();
-    this.getUserStub = sandbox.stub();
     irc.Client = ClientStub;
-    discord.Client = createDiscordStub(this.sendStub, this.getUserStub);
+    discord.Client = createDiscordStub(this.sendStub);
+    discord.WebhookClient = createWebhookStub(this.sendStub);
     ClientStub.prototype.send = sandbox.stub();
     ClientStub.prototype.join = sandbox.stub();
     this.bot = createBot();
@@ -44,6 +45,7 @@ describe('Bot Events', function () {
   });
 
   afterEach(function () {
+    this.bot.disconnect();
     sandbox.restore();
   });
 
